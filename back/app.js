@@ -277,7 +277,11 @@ async function getSurgeons(index) {
   const database = client.db('SmartOp');
   const collection = database.collection('Surgeon');
   const data = await collection.find().toArray();
-  const surgeons = data.slice(index-1, 10 * index); // Obtenir les 10 premiers éléments de la liste
+  const startIndex = (index - 1) * 10;
+  if (startIndex >= data.length) {
+    return ''; 
+  }
+  const surgeons = data.slice(index-1, 10 * index); 
   return surgeons;
 }
 

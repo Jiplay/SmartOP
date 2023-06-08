@@ -10,15 +10,15 @@ import { HttpClient } from '@angular/common/http';
             <h1>Tableau de classement des chirurgiens</h1>
             <table class="table">
             <thead>
-                <tr>
-                <th>Nom du chirurgien</th>
-                <th>Spécialité</th>
-                <th>Nombre d’interventions</th>
-                <th>Anesthésiste favori</th>
-                <th>Infirmière favorite</th>
-                <th>Salle la plus fréquente</th>
-                <th>Acte le plus fréquent</th>
-                </tr>
+              <tr>
+                <th class="sticky-header">Nom du chirurgien</th>
+                <th class="sticky-header">Spécialité</th>
+                <th class="sticky-header">Nombre d’interventions</th>
+                <th class="sticky-header">Anesthésiste favori</th>
+                <th class="sticky-header">Infirmière favorite</th>
+                <th class="sticky-header">Salle la plus fréquente</th>
+                <th class="sticky-header">Acte le plus fréquent</th>
+              </tr>
             </thead>
             <tbody>
                 <tr *ngFor="let person of this.people">
@@ -47,6 +47,13 @@ import { HttpClient } from '@angular/common/http';
         margin-bottom: 2rem;
       }
 
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      background-color: #f5f5f5;
+      z-index: 1;
+    }
+      
     .table {
             border-collapse: collapse;
             width: 100%;
@@ -73,6 +80,7 @@ export class HelloComponent implements OnInit, OnDestroy {
   people: { _id: string, name: string, spe: string, roomFav: string, nurseFav: string, opFav: string, AnestFav: string, intervention: string }[] = [];
   currentPage: number = 1;
   isLoading: boolean = false;
+  loadingData: boolean = false;
   scrollListener: any;
   scrollPosition: number = 0;
   isScrollingUp: boolean = false;
@@ -91,24 +99,29 @@ export class HelloComponent implements OnInit, OnDestroy {
   }
 
   loadData() {
-    if (this.isLoading) {
+    if (this.isLoading || this.loadingData) {
       return;
     }
-
-    this.isLoading = true;
-
+  
+    this.loadingData = true;
+  
     this.http.get(`http://localhost:3000/surgeon/${this.currentPage}`).subscribe((data: any) => {
+      const newData = data;
+      const tempData: any[] = [];
+  
       if (this.isScrollingUp) {
-        this.people = data.concat(this.people);
+        tempData.push(...newData);
+        tempData.push(...this.people);
+        this.people = tempData;
       } else {
-        this.people = this.people.concat(data);
+        this.people.push(...newData);
       }
       
-      console.log(this.people[0].name);
-      this.isLoading = false;
+      console.log("get page", this.currentPage);
+      this.loadingData = false;
     });
   }
-
+  
   onScroll() {
     const scrollPosition = window.scrollY;
 
@@ -123,17 +136,21 @@ export class HelloComponent implements OnInit, OnDestroy {
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
 
-    if (this.isScrollingUp && scrollPosition < (windowHeight * 0.1) && this.currentPage > 1) {
+    if (this.isScrollingUp && scrollPosition < (windowHeight * 0.1) && this.currentPage > 1 && !this.loadingData) {
+      console.log(this.currentPage)
       this.currentPage--;
       this.loadData();
     }
-
-    if (!this.isScrollingUp && scrollPosition > (documentHeight - windowHeight - (windowHeight * 0.1))) {
+    
+    if (!this.isScrollingUp && scrollPosition > (documentHeight - windowHeight - (windowHeight * 1.1)) && !this.loadingData) {
+      console.log(this.currentPage)
       this.currentPage++;
       this.loadData();
     }
   }
 }
+
+
 
 
 
